@@ -28,17 +28,18 @@ Python setup.py if not found in pip
 Annaconda, conda install other packages
 ```
 ### pyspark create dataframe 
+    >>> spark = SparkSession.builder.master("local").getOrCreate()
     >>> df = spark.createDataFrame([(0.5,)], ["values"])
-
+    >>> df = spark.createDataFrame([[0.5],[0.6]], ["values"])
     >>> data = [(0, Vectors.dense([-1.0, -1.0 ]),),
-    ...         (1, Vectors.dense([-1.0, 1.0 ]),),
-    ...         (2, Vectors.dense([1.0, -1.0 ]),),
-    ...         (3, Vectors.dense([1.0, 1.0]),)]
+             (1, Vectors.dense([-1.0, 1.0 ]),),
+             (2, Vectors.dense([1.0, -1.0 ]),),
+             (3, Vectors.dense([1.0, 1.0]),)]
     >>> df = spark.createDataFrame(data, ["id", "features"])
     
     >>> df = spark.createDataFrame(
-    ...    [(0, ["a", "b", "c"]), (1, ["a", "b", "b", "c", "a"])],
-    ...    ["label", "raw"])
+    [(0, ["a", "b", "c"]), (1, ["a", "b", "b", "c", "a"])],
+    ["label", "raw"])
     
     >>> df1 = spark.createDataFrame([(Vectors.dense([5.0, 8.0, 6.0]),)], ["vec"])
     
@@ -46,8 +47,11 @@ Annaconda, conda install other packages
 
 
 ### pandas dataframe for quick plot
+https://github.com/pandas-dev/pandas/blob/master/doc/cheatsheet/Pandas_Cheat_Sheet.pdf
+https://chrisalbon.com/python/data_wrangling/pandas_join_merge_dataframe/
 https://jakevdp.github.io/PythonDataScienceHandbook/04.14-visualization-with-seaborn.html
 https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html
+basic plot and resample to take a look at data
 ```
 import pandas as pd
 import numpy as np
@@ -55,7 +59,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 %matplotlib inline
 sns.set_style("whitegrid")
-log_df = pd.read_csv("log.csv")
+log_df = pd.read_csv("log.csv") #load csv into dataframe
 log_df.head()
 log_df.groupby('host').agg('count')
 from dateutil import parser
@@ -75,4 +79,19 @@ new_df_1['in_value_min'].plot()
 resample_plot(new_df_1,'1D',col='in_value_min')
 plt.legend(['sampling freq = 1 hour(original)','sampling freq = 1 day'])
 plt.title("in_value_min");
+```
+
+create data frame 
+```
+# from csv file
+log_df = pd.read_csv("log.csv") #load csv into dataframe
+# from numpy matrix
+pd.DataFrame(np.random.randn(10, 5))
+d = {'col1': ts1, 'col2': ts2}
+df = pd.DataFrame(data=d, index=index)
+```
+
+run basic queries 
+```
+users.query('occupation=="writer"')
 ```
