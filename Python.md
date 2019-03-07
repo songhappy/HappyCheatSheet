@@ -14,18 +14,25 @@ pip install --upgrade matplotlib
 pip install  keras==2.2
 Pip install jupyter
 pip install seaborn
-
 Brew install python3, then you have python3 and pip3
 Pip3 for python 3
-Install python 3.6.5 since 3.7.0 has no tensorflow
+```
+problems have seen
+1. Install python 3.6.5 since 3.7.0 has no tensorflow
 https://stackoverflow.com/questions/51125013/how-can-i-install-a-previous-version-of-python-3-in-macos-using-homebrew
 
-The Jupyter Notebook needs ipython kernel, this fix the dead kernel error
+2. The Jupyter Notebook needs ipython kernel, this fix the dead kernel error
 python2 -m pip install ipykernel python2 -m ipykernel install --user
 python3 -m pip install ipykernel python3 -m ipykernel install --user
 
 Python setup.py if not found in pip
 Annaconda, conda install other packages
+
+3. requests.exceptions.SSLError: EOF occurred in violation of protocol (_ssl.c:661)
+   LIB-2176:osf-cli nmunn$
+``` 
+pip install pyopenssl   or use python3
+```
 ```
 ### pyspark create dataframe 
     >>> spark = SparkSession.builder.master("local").getOrCreate()
@@ -52,6 +59,81 @@ https://chrisalbon.com/python/data_wrangling/pandas_join_merge_dataframe/
 https://jakevdp.github.io/PythonDataScienceHandbook/04.14-visualization-with-seaborn.html
 https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html
 basic plot and resample to take a look at data
+
+create data frame 
+```
+# from csv file
+log_df = pd.read_csv("log.csv") #load csv into dataframe
+# from numpy matrix
+pd.DataFrame(np.random.randn(10, 5))
+d = {'col1': ts1, 'col2': ts2}
+df = pd.DataFrame(data=d, index=index)
+```
+Basic operations
+```
+pd.DataFrame.from_csv(“csv_file”)
+pd.read_csv(“csv_file”)
+pd.read_excel("excel_file")
+df.to_csv("data.csv", sep=",", index=False)
+df.info()
+print(df.describe())
+headers=["col1","col2"]
+print(tabulate(print_table, headers=headers))
+df.columns 
+df.dropna(axis=0, how='any')
+df.replace(to_replace=None, value=None)
+pd.isnull(object)
+df.drop('feature_variable_name', axis=1)
+pd.to_numeric(df["feature_name"], errors='coerce') #to float
+df.as_matrix()  %to numpy matrix
+df.head(n)
+df.loc[feature_name]
+```
+
+DataFrame operations
+```
+df["height"].apply(*lambda* height: 2 * height)
+def multiply(x):
+ return x * 2
+df["height"].apply(multiply)
+df.rename(columns = {df.columns[2]:'size'}, inplace=True)
+df["name"].unique()
+new_df = df[["name", "size"]]
+```
+summarize and sort
+```
+# Sum of values in a data frame
+df.sum()
+# Lowest value of a data frame
+df.min()
+# Highest value
+df.max()
+# Index of the lowest value
+df.idxmin()
+# Index of the highest value
+df.idxmax()
+# Statistical summary of the data frame, with quartiles, median, etc.
+df.describe()
+# Average values
+df.mean()
+# Median values
+df.median()
+# Correlation between columns
+df.corr()
+# To get these values for only one column, just select it like this#
+df["size"].median()
+
+df.sort_values(ascending = False)
+
+df.loc([0], ['size'])
+```
+run basic queries 
+```
+users.query('occupation=="writer"')
+#filter
+df[df["size"] == 5]
+```
+example
 ```
 import pandas as pd
 import numpy as np
@@ -59,14 +141,18 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 %matplotlib inline
 sns.set_style("whitegrid")
-log_df = pd.read_csv("log.csv") #load csv into dataframe
-log_df.head()
-log_df.groupby('host').agg('count')
+df = pd.read_csv("log.csv") #load csv into dataframe
+df = pd.read_excel("test.exel")
+df.to_csv("out_file)
+df.head()
+df.info()
+print(df.describe())
 from dateutil import parser
-log_df['processed_date'] = log_df['logDate'].str.replace(':', ' ', 1).str.replace(r'\[|\]', '')
-log_df.describe()
+df.groupby('host').agg('count')
+df.replace(to_replace=None, value= None)
+df['processed_date'] = df['logDate'].str.replace(':', ' ', 1).str.replace(r'\[|\]', '')
 #add a column and set index for plot
-one_ip_sample_df = log_df[log_df['host'] == '122.119.64.67']
+one_ip_sample_df = df[df['host'] == '122.119.64.67']
 one_ip_sample_df['dt_index'] = pd.to_datetime(one_ip_sample_df['processed_date'])
 one_ip_sample_df = one_ip_sample_df.set_index('dt_index')
 def resample_plot(df,freq,col='value'):
@@ -79,19 +165,4 @@ new_df_1['in_value_min'].plot()
 resample_plot(new_df_1,'1D',col='in_value_min')
 plt.legend(['sampling freq = 1 hour(original)','sampling freq = 1 day'])
 plt.title("in_value_min");
-```
-
-create data frame 
-```
-# from csv file
-log_df = pd.read_csv("log.csv") #load csv into dataframe
-# from numpy matrix
-pd.DataFrame(np.random.randn(10, 5))
-d = {'col1': ts1, 'col2': ts2}
-df = pd.DataFrame(data=d, index=index)
-```
-
-run basic queries 
-```
-users.query('occupation=="writer"')
 ```

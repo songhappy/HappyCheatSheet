@@ -1,4 +1,4 @@
-# Spark Scala CheetSheet
+# Spark Scala CheatSheet
 This puts my utils of spark together, especially stats related
 http://twitter.github.io/effectivescala/
 http://www.tutorialspoint.com/scala/index.htm
@@ -9,6 +9,38 @@ download a version, from https://spark.apache.org/downloads.html, cd that home p
 ```
 spark-shell
 ```
+## spark Dataframe
+easiest way to create dataframe is using case class for schema
+```
+    val sqlContext2 = new SQLContext(sc)
+    import sqlContext2.implicits._
+    val df2: DataFrame = sc.parallelize(List((1.0, -1.0, 2.0), (2.0, 0.0, 0.0), (0.0, 1.0, -1.0)))
+      .toDF("c1", "c2", "c3")
+
+    val dataFrame = sqlContext.createDataFrame(Seq(
+      (0, Vectors.dense(1.0, 0.1, -8.0)),
+      (1, Vectors.dense(2.0, 1.0, -4.0)),
+      (2, Vectors.dense(4.0, 10.0, 8.0))
+    )).toDF("id", "features")
+```
+
+```
+    case class Rec(id: String, val1: String, val2: String, val3: String) // should be defined outside of the function, parallel to class
+    // issue: Task not serializable org.apache.spark.SparkException: Task not serializable
+
+    val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+    import sqlContext.implicits._
+    val data: RDD[String] = sc.parallelize(Seq("a,1,2,3", "b,1,2,3", "c,2,2,3"))
+    data.take(10).foreach(println)
+    val df = data.map(x => {
+      val lines = x.split(",")
+      Rec(lines(0), lines(1), lines(2), lines(3))
+    }).toDF()
+    df.show()
+  }
+```
+
+## serializable issue and fixation
 
 ## UDF and partial functions
 
@@ -25,9 +57,11 @@ val percentile = udf((values: scala.collection.mutable.WrappedArray[Float], p: F
         sortedValues(index)
       }
     })
+df.withColumn("99", percentile(col("dataList"), lit(0.99)))
+
 ```
 
-Window Function 
+Window Function
 ```
 def recommend4Items(featureDF: DataFrame, maxUsers: Float): DataFrame = {
   val results = predictUserItemPair(featureDF)
@@ -39,19 +73,20 @@ def recommend4Items(featureDF: DataFrame, maxUsers: Float): DataFrame = {
 }
 ```
 
-lazy load fix serialization 
-In spark, map, ruduce, groupby and other functions, driver gets everything closed in a closure, then sends it to executors. Other things are done by driver, for example, val ran = new Random(), since the closure needs it then driver has to send it through socket, but ran is not serializable, then it cause problems. So it needs lazy load, lazy means, the driver does not new it or send the object, but the executer will new an object when it needs it. 
-In this exmaple, each executor has an object of ran to produce random numnbers, it is better than put the ran in closure in terms of distribution.
-```def getNegativeSamples(indexed: DataFrame): DataFrame = {
+lazy load fix serialization
+In spark, map, ruduce, groupby and other functions, driver gets everything closed in a closure, then sends it to executors. Other things are done by driver, for example, val ran = new Random(), since the closure needs it then driver has to send it through socket, but ran is not serializable, then it cause problems. So it needs lazy load, lazy means, the driver does not new it or send the object, but the executer will new an object when it needs it.
+In this exmaple, each executor has an object of ran to produce random numnbers, it is better than to put the ran in closure in terms of distribution.
+```
+def getNegativeSamples(indexed: DataFrame): DataFrame = {
   val indexedDF = indexed.select("userId", "itemId", "label")
   val minMaxRow = indexedDF.agg(max("userId"), max("itemId")).collect()(0)
   val (userCount, itemCount) = (minMaxRow.getInt(0), minMaxRow.getInt(1))
   val sampleDict = indexedDF.rdd.map(row => row(0) + "," + row(1)).collect().toSet
   val dfCount = indexedDF.count.toInt
   import indexed.sqlContext.implicits._
-  
+
 @transient lazy val ran = new Random(System.nanoTime())
- 
+
   val negative = indexedDF.rdd
     .map(x => {
       val uid = x.getAs[Int](0)
@@ -66,11 +101,11 @@ In this exmaple, each executor has an object of ran to produce random numnbers, 
 ```
 
 Abstract class vs trait
-Abstract class is class, inherit from one class, it takes constructors.
+Abstract class is class, inherit from one class, it takes constructors and parameters.
 Trait can be extended with multiple traits,  but trait does not have constructors, will not be able to pass parameters.
- 
+
 Functions VS methods applied for udfs
-No (x:String) things like this needed. 
+No (x:String) things like this needed.
 Anonymous functions are first-class functions → Function values are objects
 Assign function values to variables.
 Pass function values as arguments to higher order functions
@@ -79,7 +114,6 @@ val categoricalUDF = udf(Utils.categoricalFromVocabList(Array("F", "M")))
 def categoricalUDF(list:Array[String]) = udf(Utils.categoricalFromVocabList(list))
 categoricalUDF(Array("F", "M”))
 ```
-
 Simple udf functions
 ```
   /**
@@ -102,10 +136,10 @@ def buckBucket(bucketSize: Int): (String, String) => Int = {
     (Math.abs((col1 + "_" + col2).hashCode()) % bucketSize + 0)
   func
 }
-val bucketUDF = udf(buckBucket(100)) //here 100 is partially applied in advance. 
+val bucketUDF = udf(buckBucket(100)) //here 100 is partially applied in advance.
 Df.withColumn(“x”,bucketUDF(col1, col2))
 ```
- 
+
 ```
     def searchGeohash(geohashSet: Set[String], max: Int, min: Int) = {
       val func: (String => String) = (arg: String) => {
@@ -130,8 +164,8 @@ Lazy Evaluation − Functional programming supports Lazy Functional Constructs l
 
 Apply function in Scala
 
-1. Every function in Scala can be treated as an object, every object can be treated as a function, provided it has the apply method. 
-There are many usage cases when we would want to treat an object as a function. 
+1. Every function in Scala can be treated as an object, every object can be treated as a function, provided it has the apply method.
+There are many usage cases when we would want to treat an object as a function.
 Such objects can be used in the function notation:
 ```$xslt
 // we will be able to use this object as a function, as well as an object
@@ -140,7 +174,7 @@ object Foo {
   def apply (x: Int) = x + y
 }
 
-Foo (1) // using Foo object in function notation 
+Foo (1) // using Foo object in function notation
 ```
 2. The most common scenario of using an apply function is a factory pattern, and companion. Synatic sugar, and multiple ways of building objects
 ```
@@ -153,10 +187,10 @@ object Foo {
   def apply (x: Float) = New class Foo(x)
 }
 
-val foo1 = Foo (1) // build an object 
+val foo1 = Foo (1) // build an object
 ```
 3. You can also define an apply function in class, after you build an object of that class in whatever way.
-then you can call apply function. In this exmaple, 
+then you can call apply function. In this exmaple,
 ```
 class c1(x:Float) ={
     def apply(x:String)= {
@@ -193,68 +227,19 @@ val predict: Int = ev.toType[Int](_output.max(1)._2.valueAt(1))
 
 ```
 ## MLLib and ML Vectors
-ML Vector 
-DataFrame related APIs use org.apache.spark.ml.linalg.Vector, but the old mllib use org.apache.spark.mllib.linalg.Vector, 
+ML Vector
+DataFrame related APIs use org.apache.spark.ml.linalg.Vector, in double, but the old mllib use org.apache.spark.mllib.linalg.Vector,
 org.apache.spark.mllib.util.MLUtils.convertVectorColumnsToML and other APIs are used to convert the data from one type to another.
+BigDL uses array usually float, it needs array2vec or vec2array
+```
+  val array2vec = udf((arr: scala.collection.mutable.WrappedArray[Float]) => {
+    val d = arr.map(x => x.toDouble)
+    Vectors.dense(d.toArray)
+  })
 
-## BigDL related data stracture
-BigDL Tensor, basic data strcture to hold the data
-```
-trait Activity
-class Table extends Activity
-trait Tensor[T] extends Serializable with TensorMath[T] with Activity 
-class DenseTensor extends Tensor
-``` 
-BigDL Sample, MiniBatch
-    Sample represents the features and labels of a data sample, features and labels are tensors.
-    BigDL optimizer takes RDD[Sample[T]] or DataSet[D] currently. Eventually, everything should be packed into these two, I use RDD[Sample[T]] often.
-    RDD[Sample[T]] is converted into Iterater[MiniBatch[T]] while building an Optimizer using SampleToMiniBatch transformer. 
-    //how to get grab data from every node to build the MiniBatch?
-BigDL DataSet and Transformer, all kinds of rdd manipulation 
-    DataSet are sent to Optimizer directly. It takes a transformer and manipluate the data. In the optimizer, it only caches the original dataset, and apply a couple of transformer later
-```   
-Trait AbstractDataSet[D,DataSequence]{
-  def transform[C: ClassTag](transformer: Transformer[D, C]): DataSet[C]
-  def -> [C: ClassTag](transformer: Transformer[D, C]): DataSet[C] = {this.transform(transformer)}
-} 
-```
-ImageFrame, ImageFeature and Transformer
-    It includes all image transformation, eventually to a list of ImageFeature which is a hashMap of sample and label(could be maipulated by BigDL optimizer and related) and other attributes could be manipluated by OpenCV
-    Transformer defines a function which you want to apply to some data, Transformer can take an imageFrame and ImageFrame can take a transformer.
-    Eventually, features are array of numbers in dataframe to be sent to DLClassifier's fit 
-```
-trait Transformer{
-    def ->[C](other:Transformer): new ChainedTransformer(this, other) // take a transformer and chain it
-}
-abstract FeatureTransformer extends Transformer{
-    def transform(feature:ImageFeature):ImageFeature //use OpenCV methodologies to transform
-    def apply(imageFrame: ImageFrame): ImageFrame = {
-        imageFrame.transform(this)
-     }
-}
-```
-``` 
-Trait ImageFrame{
-    def transform(transformer:Transformer):ImageFrame
-    def ->(transformer:FeatureTransformer):ImageFrame = this.transform(transformer)
-}
-```
-```
-class ImageFeature extends Serializable {
-  private val state = new mutable.HashMap[String, Any]() // it uses HashMap to store all these data,original bytes read from image file, an opencv mat, pixels in float array, image label, sample, meta data and so on
-  val sample = "sample"
-  val label = "label"
-}
-``` 
-BigDL AbstractModule, all kinds of layers, Container for all models
-``` 
-abstract class AbstractModule[A <: Activity: ClassTag, B <: Activity: ClassTag, T: ClassTag](implicit ev: TensorNumeric[T]) extends Serializable with InferShape{
-abstract class TensorModule[T: ClassTag](implicit ev: TensorNumeric[T]) extends AbstractModule[Tensor[T], Tensor[T], T]
-class Linear[T:ClassTag](val inputSize: Int, val outputSize: Int)(implicit ev: TensorNumeric[T]) extends TensorModule[T] with Initializable
-```
-```
-abstract class Container[A <: Activity : ClassTag,B <: Activity : ClassTag, T: ClassTag](implicit ev: TensorNumeric[T]) extends AbstractModule[A, B, T]
-abstract class DynamicContainer[A <: Activity : ClassTag, B <: Activity : ClassTag, T: ClassTag](implicit ev: TensorNumeric[T]) extends Container[A, B, T]
-class Sequential[T: ClassTag](implicit ev: TensorNumeric[T]) extends DynamicContainer[Activity, Activity, T]
-```
 
+  val vec2array = udf((arr: scala.collection.mutable.WrappedArray[Double]) => {
+    val d = arr.map(x => x.toFloat)
+    Array(d.toArray)
+  })
+```
