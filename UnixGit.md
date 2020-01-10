@@ -1,6 +1,40 @@
 # Unix command and git command CheetSeet
 
-1. Get fetch all branches from remote
+
+## unix, testcases, git
+1. print word frequencies in a file
+`cat words.txt |  tr '\n' ' '| tr -s ' ' | tr ' ' '\n' | sort | uniq -c |sort -k 2 -rn| awk '{print $2" "$1}' `
+2. find patterns, or and
+`grep 'pattern1\|pattern2' filename`  # or
+find correct phone numbers
+`cat file.txt | egrep ^'(\([0-9]{3}\) |[0-9]{3}-)[0-9]{3}-[0-9]{4}'$`
+^: start of string, $: end of string 
+find any numbers of a file, replace none numbers to nothing
+`echo "I am 999 years old." | sed 's/[^0-9]*//g' | awk {print}`
+`echo "I am 999 years old." | tr -dc '0-9' | awk {print}`
+-c: complimentary, -d: delete
+^:not
+find pattern 1 and pattern2
+`grep -E 'pattern1.*pattern2' filename`
+3. display the tenth line
+`tail -n +10 file.txt | head -n 1`
+head -n: lines
+4. loops in bash
+      #!/bin/bash
+        for i in `seq 1 10`;
+        do
+            echo $
+            echo hello
+        done  
+        
+## testcases
+1. connecting to a server for a small file
+`input = "hdfs://blabla`
+
+
+
+## git
+1. Git fetch all branches from remote
 ```
 Git fetch --all
 ```
