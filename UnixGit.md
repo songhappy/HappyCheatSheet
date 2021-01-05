@@ -71,5 +71,7 @@ git pull --rebase  intel-analytics master
 8. CTRL SHIFT CMD + for superscript
 CTRL CMD - for subscript
 
-
+9. disable proxy
+export http_proxy=
+export https_proxy=
 

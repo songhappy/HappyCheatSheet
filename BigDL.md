@@ -82,3 +82,18 @@ abstract class DynamicContainer[A <: Activity : ClassTag, B <: Activity : ClassT
 class Sequential[T: ClassTag](implicit ev: TensorNumeric[T]) extends DynamicContainer[Activity, Activity, T]
 ```
 
+### BigDL dataset 
+
+
+### BigDL training process
+miniBatch: on each core
+After each task computes its gradients, instead of sending gradients back to driver, gradients from all the partitions within a single worker are aggregated locally. Each node will have one gradient.
+After that the aggregated gradient on each node is sliced into chunks and these chunks are exchanged between all the nodes in the cluster buy block manager. 
+Each node is responsible for a specific chunk, which in essence implements a PS architecture in BigDL for parameter synchronization. 
+Each node retrieves gradients for the slice of the model that this node is responsible for from all the other nodes and aggregates them in multiple threads. 
+After the pair-wise exchange completes, each node has its own portion of aggregated gradients and uses this to update its own portion of weights. 
+Then the exchange happens again for synchronizing the updated weights. 
+
+iteration, how to divide into different iterations?
+how to for other nodes to get the updated parameters? each node reads updated weights from other nodes.
+

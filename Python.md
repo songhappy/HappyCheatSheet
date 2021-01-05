@@ -9,10 +9,16 @@
 7. algorithms
 
 ## Install Python packages 
-```
-code and notes Pip, easy_install for python packages
-Brew install for mac apt_get
 
+code and notes Pip, easy_install for python packages
+install an older version of python
+``` bash
+Brew unlink python #brew is apt_get(linux) for mac
+brew install python@3.7
+brew link -f python@3.7
+```
+
+```bash
 Pip for python 2 default
 Pip install tensorflow
 Pip install numpy
@@ -43,9 +49,30 @@ pip install pyopenssl   or use python3
 ```
 
 ## python basic concepts
+### some syntax and wrappers
+```python
+class Foo:
+    "this is a test"
+    def __init__(self):
+        self._a = 0 #_variable name means private menber of the class
+        self._b = 1
+    def __call__(self, a): #call an instance as method
+        print(a)
+foo = Foo()
+print(__name__) # __name__ is assigned by python interpretor when it reads a source file at that level
+
+class EnvCore:  
+    pass
+class Env(gym.Env): # it is a wrapper of EnvCore
+    def __init__(self):
+        self._env = EnvCore()
+    def step(self, action):
+        pass
+```
+
 ### python numbers
 int, float and complex how many bytes per each number
-```
+```python
 print(type(a))
 print(isinstance(a, int))
 import sys
@@ -56,7 +83,7 @@ int(3.0); float(4); print(str(a))
 ```
 ### python datastructures
 list based on array, used as stack
-```
+```python
 a = list()
 a = [1,2,3,4]
 b = a.copy()
@@ -71,7 +98,7 @@ len(a)
 ```
 
 collections.deque, based on doublely linked list, used as queue
-```
+```python
 import collections
 a = collections.deque([1, 2, 3, 4, 5])
 a.copy()
@@ -85,14 +112,14 @@ print(a.index(3))
 ```
 
 tuples, can not change elements
-```
+```python
 a = (1,2,3)
 print(a.index(1)) #index of value
 print(a[0])
 ```
 
 set, unique unordered
-```
+```python
 a=set()
 a={1,2,3}
 a.add(4)
@@ -108,14 +135,14 @@ a.copy()
 ```
 
 string, storaged in list
-```
+```python
 a = "helloworld"
 a[-1]
 a + "how are you"
 ```
 
 dictionary
-```
+```python
 a = dict()
 print(a)
 a =  {'name':'Jack', 'age': 26}
@@ -133,7 +160,7 @@ print(a)
 ```
 
 ### read and write files 
-```
+```python
 X = ["1,2,3,4,5","6,7,8,9,10"]
 with open(path0 +"demofile.txt", "w") as f:
     for item in X:
@@ -142,7 +169,7 @@ with open(path0 +"demofile.txt", "w") as f:
 with open(path0 +"demofile.txt") as f:
     X = [line.strip() for line in f]
 ```
-```
+```python
 # pickle serilize objects directly
 import pickle
 X_file = open(path0 +"demofile2.txt", 'w')
@@ -161,7 +188,7 @@ https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html
 basic plot and resample to take a look at data
 
 ### create data frame 
-```
+```python
 # from csv file
 log_df = pd.read_csv("log.csv") #load csv into dataframe
 # from numpy matrix
@@ -170,7 +197,7 @@ d = {'col1': ts1, 'col2': ts2}
 df = pd.DataFrame(data=d, index=index)
 ```
 ### Basic operations
-```
+```python
 pd.DataFrame.from_csv(“csv_file”)
 pd.read_csv(“csv_file”)
 data = pd.read_csv('output_list.txt', sep=" ", header=None)
@@ -193,7 +220,7 @@ pd.pivot(df) #rows into columns
 ```
 
 ### DataFrame operations
-```
+```python
 df["height"].apply(*lambda* height: 2 * height)
 def multiply(x):
  return x * 2
@@ -203,7 +230,7 @@ df["name"].unique()
 new_df = df[["name", "size"]]
 ```
 ### summarize and sort
-```
+```python
 # Sum of values in a data frame
 df.sum()
 # Lowest value of a data frame
@@ -236,7 +263,7 @@ users.query('occupation=="writer"')
 df[df["size"] == 5]
 ```
 example
-```
+```python
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -270,8 +297,19 @@ plt.title("in_value_min");
 ```
 ## pyspark and related
 
-### pyspark create dataframe 
+### add memory for spark in python module
+```bash 
+    export _JAVA_OPTIONS="-Xms512m -Xmx1024m"
 ```
+
+```python
+    from zoo import init_spark_on_local
+    conf = {"spark.executor.memory":"20g","spark.driver.memory":"20g"}
+    sc = init_spark_on_local(cores=8, conf=conf)
+```
+
+### pyspark create dataframe 
+````python
     >>> spark = SparkSession.builder.master("local").getOrCreate()
     >>> df = spark.createDataFrame([(0.5,)], ["values"])
     >>> df = spark.createDataFrame([[0.5],[0.6]], ["values"])
